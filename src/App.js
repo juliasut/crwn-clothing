@@ -20,12 +20,25 @@ class App extends React.Component {
 
   componentDidMount() {
     // we've subscribed for the application to listen to the auth, the auth is sending the user object every time untill they sign out
-    this.unsubscribeFromAuth = auth.onAuthStateChanged(async userAuth => {
+    this.unsubscribeFromAuth = auth.onAuthStateChanged(async (userAuth) => {
       if (userAuth) {
-        await createUserProfileDocument(userAuth);
+        // createUserprofileDocument returns userRef as set in firebase.utils.js
+        const userRef = await createUserProfileDocument(userAuth);
+
+        userRef.onSnapshot((snapShot) => {
+          this.setState(
+            {
+              currentUser: {
+                id: snapShot.id,
+                ...snapShot.data(),
+              },
+            }
+          );
+        });
       }
-    }
-    );
+
+      this.setState({ currentUser: userAuth });
+    });
   }
 
   componentWillUnmount() {
@@ -36,7 +49,7 @@ class App extends React.Component {
   render() {
     return (
       <div>
-        <Header currentUser={this.state.currentUser}/>
+        <Header currentUser={this.state.currentUser} />
         <Switch>
           <Route exact path="/" component={HomePage} />
           <Route path="/shop" component={ShopPage} />
